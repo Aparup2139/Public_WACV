@@ -79,19 +79,24 @@ print(f"Model built. Checkpoint threshold: {threshold}")
 CELL_BUILD_DATA = """\
 config.data.root = paths["data_root"]  # data_root is a path, not a hyperparameter -- set directly, not via config.yaml's "data" override section
 
-index_kwargs = {}
+pruned_names = None
 if DATASET == "valais_bmd" and paths.get("pruned_names_pickle"):
     from valais_bmd.dataset import load_pruned_names
-    pruned = load_pruned_names(paths["pruned_names_pickle"])
-    index_kwargs = {"pruned_names": pruned}
+    pruned_names = load_pruned_names(paths["pruned_names_pickle"])
+
+if DATASET == "b_flair":
+    print("b_flair has a flat layout (no train/val/test split): train, val and test "
+          "datasets below all point at the SAME index. Do not uncomment the fit(...) "
+          "call further down for this dataset -- it would train on the test set.")
 
 def index_builder(root, split):
-    if index_kwargs:
-        return dataset_module.build_index(root, split, **index_kwargs)
-    try:
-        return dataset_module.build_index(root, split)
-    except TypeError:
-        return dataset_module.build_index(root)  # b_flair: flat layout, no split argument
+    if DATASET == "b_flair":
+        return dataset_module.build_index(root)  # flat layout, no split argument
+    if DATASET == "valais_bmd":
+        # pruned_names is a TEST-split-specific artifact (test_imgs_filtered_5000_2.pkl);
+        # applying it to train/val would filter out nearly every triplet.
+        return dataset_module.build_index(root, split, pruned_names=pruned_names if split == "test" else None)
+    return dataset_module.build_index(root, split)
 
 bundle = build_datasets(
     config.data,
@@ -118,8 +123,36 @@ print("Zero-shot metrics:", zero_shot_metrics)
 # fit(config, bundle, CONTEXT)
 """
 
+CELL_THRESHOLD_SELECTION = """\
+# Optional: sweep thresholds and pick an operating point via this dataset's configured
+# strategy, instead of just using the checkpoint's stored threshold. Uncomment to run.
+# threshold_grid = ds_config.get("threshold_grid", {})
+# if threshold_grid:
+#     grid_spec = threshold_grid.get("final") or threshold_grid.get("reference_only")
+#     candidate_thresholds = [round(grid_spec[0] + grid_spec[2] * i, 4)
+#                             for i in range(int((grid_spec[1] - grid_spec[0]) / grid_spec[2]) + 1)]
+#     # sweep_thresholds returns (best_threshold, best_metrics, rows) -- we only need `rows`
+#     # here since the selection strategy (plateau vs. argmax) is applied below.
+#     _, _, rows = sweep_thresholds(model, bundle.val_dataset, candidate_thresholds, config.eval, CONTEXT, amp=True)
+#     if threshold_grid.get("selection_strategy") == "plateau":
+#         threshold = pick_threshold_plateau(rows)
+#     else:
+#         threshold = max(rows, key=lambda row: row["f1"])["threshold"]
+#     print(f"Selected threshold via sweep: {threshold}")
+#
+# if DATASET == "valais_bmd":
+#     from valais_bmd.diagnostics import component_recall_by_size
+#     bins = tuple(tuple(b) for b in ds_config["diagnostics"]["component_recall_bins"])
+#     # after computing a prediction/target pair for a validation sample:
+#     # recall_by_size = component_recall_by_size(prediction, target, bins=bins)
+#     # print(recall_by_size)
+"""
+
 CELL_VISUALIZE = """\
-figure = qg_show(model, bundle.test_dataset, threshold, DEVICE, n=3, title=f"{DATASET} zero-shot", prefer_changed=True)
+figure = qg_show(
+    model, bundle.test_dataset, threshold, DEVICE, n=3, title=f"{DATASET} zero-shot", prefer_changed=True,
+    tile=config.eval.tile_size, stride=config.eval.tile_stride,
+)
 """
 
 CELL_BENCHMARK = """\
@@ -135,6 +168,7 @@ CELLS = [
     ("code", CELL_BUILD_MODEL),
     ("code", CELL_BUILD_DATA),
     ("code", CELL_TRAIN_OR_EVAL),
+    ("code", CELL_THRESHOLD_SELECTION),
     ("code", CELL_VISUALIZE),
     ("code", CELL_BENCHMARK),
 ]

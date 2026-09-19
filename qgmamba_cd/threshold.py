@@ -40,8 +40,7 @@ def pick_threshold_plateau(rows: list[dict], tolerance: float = 0.99) -> float:
     plateau = ordered[lo:hi + 1]
     picked = plateau[len(plateau) // 2]
 
-    assert picked["f1"] >= tolerance * best_f1, (
-        "pick_threshold_plateau selected a threshold below tolerance"
-    )
+    if picked["f1"] < tolerance * best_f1:
+        raise ValueError("pick_threshold_plateau selected a threshold below tolerance")
 
     return picked["threshold"]
