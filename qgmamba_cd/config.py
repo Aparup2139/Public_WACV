@@ -144,6 +144,22 @@ def _merge_dataclass(instance: Any, values: dict[str, Any]) -> Any:
     return instance
 
 
+def apply_overrides(config: ExperimentConfig, overrides: dict[str, dict]) -> ExperimentConfig:
+    """Merge dataset-specific `config.yaml` override sections onto an already-loaded config.
+
+    Reuses `_merge_dataclass`'s per-field "unknown key" validation, but does NOT re-run
+    `load_config`'s cross-field validation block (e.g. `model.input_size == data.image_size`).
+    Only pass overrides already known to be internally consistent.
+    """
+    allowed = {"data", "model", "loss", "train", "eval"}
+    unknown = set(overrides) - allowed
+    if unknown:
+        raise ValueError(f"Unknown configuration sections: {sorted(unknown)}")
+    for section, values in overrides.items():
+        _merge_dataclass(getattr(config, section), values or {})
+    return config
+
+
 def load_config(path: str | Path) -> ExperimentConfig:
     path = Path(path)
     with path.open("r", encoding="utf-8") as handle:
