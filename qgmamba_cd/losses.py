@@ -4,7 +4,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import TYPE_CHECKING
+from pathlib import Path
+from typing import Callable, TYPE_CHECKING
 
 from .config import LossConfig
 from .model import no_amp
@@ -185,17 +186,19 @@ class FullLoss(nn.Module):
         return shortfall.pow(2).mean()
 
 
-def estimate_pos_weight(paths: "SplitPaths", max_files: int = 200) -> float:
-    import cv2
-
+def estimate_pos_weight(
+    paths: "SplitPaths",
+    max_files: int = 200,
+    read_mask: "Callable[[Path], np.ndarray] | None" = None,
+) -> float:
+    if read_mask is None:
+        from .data import DEFAULT_READERS
+        read_mask = DEFAULT_READERS.read_mask
     step = max(1, len(paths) // max_files)
     positives = 0
     total = 0
     for path in paths.labels[::step]:
-        mask = cv2.imread(str(path), cv2.IMREAD_GRAYSCALE)
-        if mask is None:
-            raise RuntimeError(f"Could not read label while estimating class balance: {path}")
-        mask = mask > 127
+        mask = read_mask(path)
         positives += int(mask.sum())
         total += int(mask.size)
     return float(np.clip(np.sqrt((total - positives) / (positives + 1.0e-6)), 1.0, 4.0))

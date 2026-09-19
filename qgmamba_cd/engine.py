@@ -257,7 +257,10 @@ def fit(config: ExperimentConfig, bundle: DatasetBundle, context: DistributedCon
         best_threshold,
         history,
     ) = build_training_objects(config, bundle, context)
-    criterion = FullLoss(config.loss, estimate_pos_weight(bundle.train_paths)).to(context.device)
+    pos_weight = config.train.pos_weight
+    if pos_weight is None:
+        pos_weight = estimate_pos_weight(bundle.train_paths, read_mask=bundle.readers.read_mask)
+    criterion = FullLoss(config.loss, pos_weight).to(context.device)
     if start_epoch <= config.train.freeze_encoder_epochs:
         set_encoder_trainable(model, False)
     output_dir = Path(config.train.output_dir)

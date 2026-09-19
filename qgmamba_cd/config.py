@@ -80,6 +80,7 @@ class TrainConfig:
     learning_rate: float = 2.0e-4
     weight_decay: float = 1.0e-4
     ema_decay: float = 0.999
+    pos_weight: float | None = None  # overrides estimate_pos_weight() when set; some datasets (e.g. Valais) need a value outside its [1, 4] clip range
     freeze_encoder_epochs: int = 3
     patience: int = 8
     amp: bool = True
