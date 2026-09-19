@@ -1,0 +1,16 @@
+# b_flair/config.yaml
+paths:
+  data_root: "${BFLAIR_DATA_ROOT}"     # expects <root>/{t1,t2,annotations}, flat, no splits
+  metadata_path: "${BFLAIR_DATA_ROOT}/metadata.json"
+  checkpoint_path: "s2looking/checkpoints/qgmamba_s2looking_best_11.pt"  # zero-shot transfer source
+  model_config_path: "config/levir_cd_accuracy_4x40gb.yaml"  # must match checkpoint architecture, NOT configs/bflair_cd_paper.yaml
+  output_dir: "b_flair/results"
+
+eval:
+  tile_size: 256
+  tile_stride: 256
+  final_stride: 128
+  d4_tta: false
+
+threshold_grid:
+  reference_only: [0.05, 0.925, 0.025]   # in-sample reference curve only -- operating threshold comes from the checkpoint's stored value, per the original notebook's zero-shot protocol

@@ -2,9 +2,11 @@ import pickle
 from pathlib import Path
 import numpy as np
 import cv2
+import tifffile
 
 from s2looking.dataset import build_index, READERS
 from valais_bmd.dataset import build_index as valais_build_index, load_pruned_names, READERS as VALAIS_READERS
+from b_flair.dataset import build_index as bflair_build_index, READERS as BFLAIR_READERS
 
 
 def _make_pair(root: Path, split: str, name: str):
@@ -63,3 +65,33 @@ def test_load_pruned_names_reads_pickle(tmp_path):
     with pickle_path.open("wb") as handle:
         pickle.dump(["a.png", "b.png"], handle)
     assert load_pruned_names(pickle_path) == {"a.png", "b.png"}
+
+
+def test_bflair_build_index_flat_layout(tmp_path):
+    for sub in ("t1", "t2", "annotations"):
+        (tmp_path / sub).mkdir(parents=True)
+    tifffile.imwrite(tmp_path / "t1" / "0001.tif", np.zeros((4, 4, 5), dtype=np.uint8))
+    tifffile.imwrite(tmp_path / "t2" / "0001.tif", np.zeros((4, 4, 5), dtype=np.uint8))
+    tifffile.imwrite(tmp_path / "annotations" / "0001.tif", np.zeros((4, 4), dtype=np.uint8))
+
+    result = bflair_build_index(tmp_path)
+
+    assert result.names == ["0001.tif"]
+
+
+def test_bflair_read_image_drops_ir_and_elevation_bands(tmp_path):
+    image_path = tmp_path / "img5.tif"
+    data = np.zeros((4, 4, 5), dtype=np.uint8)
+    data[0, 0] = [10, 20, 30, 99, 200]  # R, G, B, IR, Elevation
+    tifffile.imwrite(image_path, data)
+
+    result = BFLAIR_READERS.read_image(image_path)
+
+    assert result.shape == (4, 4, 3)
+    assert result[0, 0].tolist() == [10, 20, 30]
+
+
+def test_bflair_read_mask_threshold_zero(tmp_path):
+    mask_path = tmp_path / "mask.tif"
+    tifffile.imwrite(mask_path, np.array([[0, 255]], dtype=np.uint8))
+    assert BFLAIR_READERS.read_mask(mask_path).tolist() == [[0, 1]]
