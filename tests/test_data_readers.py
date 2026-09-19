@@ -1,0 +1,37 @@
+import numpy as np
+import cv2
+from pathlib import Path
+
+from qgmamba_cd.data import make_grayscale_mask_reader, read_rgb_cv2, DEFAULT_READERS
+
+
+def test_grayscale_mask_reader_default_threshold_matches_legacy_127(tmp_path):
+    mask_path = tmp_path / "mask.png"
+    cv2.imwrite(str(mask_path), np.array([[0, 100, 200, 255]], dtype=np.uint8))
+    reader = make_grayscale_mask_reader(threshold=127)
+    result = reader(mask_path)
+    assert result.tolist() == [[0, 0, 1, 1]]
+
+
+def test_grayscale_mask_reader_zero_threshold_for_binary_zero_one_masks(tmp_path):
+    # ValaisCD-style masks are {0, 1}, not {0, 255}; threshold=127 would zero everything.
+    mask_path = tmp_path / "mask01.png"
+    cv2.imwrite(str(mask_path), np.array([[0, 1, 1, 0]], dtype=np.uint8))
+    reader = make_grayscale_mask_reader(threshold=0)
+    result = reader(mask_path)
+    assert result.sum() == 2  # would be 0 with the old hardcoded >127 threshold
+
+
+def test_default_readers_read_mask_reproduces_legacy_behavior(tmp_path):
+    mask_path = tmp_path / "mask.png"
+    cv2.imwrite(str(mask_path), np.array([[0, 200]], dtype=np.uint8))
+    assert DEFAULT_READERS.read_mask(mask_path).tolist() == [[0, 1]]
+
+
+def test_read_rgb_cv2_converts_bgr_to_rgb(tmp_path):
+    image_path = tmp_path / "img.png"
+    bgr = np.zeros((2, 2, 3), dtype=np.uint8)
+    bgr[0, 0] = (10, 20, 30)  # BGR
+    cv2.imwrite(str(image_path), bgr)
+    rgb = read_rgb_cv2(image_path)
+    assert rgb[0, 0].tolist() == [30, 20, 10]

@@ -3,6 +3,7 @@ from __future__ import annotations
 import random
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Callable
 
 import albumentations as A
 import cv2
@@ -163,21 +164,38 @@ def subset_split(paths: SplitPaths, fraction: float) -> SplitPaths:
     return SplitPaths(paths.a[:count], paths.b[:count], paths.labels[:count], paths.names[:count])
 
 
-def _read_rgb(path: Path) -> np.ndarray:
+@dataclass(frozen=True)
+class Readers:
+    read_image: Callable[[Path], np.ndarray]
+    read_mask: Callable[[Path], np.ndarray]
+
+
+def read_rgb_cv2(path: Path) -> np.ndarray:
     image = cv2.imread(str(path), cv2.IMREAD_COLOR)
     if image is None:
         raise RuntimeError(f"OpenCV could not read image: {path}")
     return cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
 
-def _read_mask(path: Path) -> np.ndarray:
-    mask = cv2.imread(str(path), cv2.IMREAD_GRAYSCALE)
-    if mask is None:
-        raise RuntimeError(f"OpenCV could not read mask: {path}")
-    return (mask > 127).astype(np.uint8)
+def make_grayscale_mask_reader(threshold: int = 127) -> Callable[[Path], np.ndarray]:
+    def _read(path: Path) -> np.ndarray:
+        mask = cv2.imread(str(path), cv2.IMREAD_GRAYSCALE)
+        if mask is None:
+            raise RuntimeError(f"OpenCV could not read mask: {path}")
+        return (mask > threshold).astype(np.uint8)
+    return _read
 
 
-class LEVIRPatchDataset(Dataset):
+DEFAULT_READERS = Readers(read_image=read_rgb_cv2, read_mask=make_grayscale_mask_reader(127))
+
+IndexBuilder = Callable[["str | Path", str], "SplitPaths"]
+
+# Private aliases: kept so any other internal call sites in this file keep working unchanged.
+_read_rgb = read_rgb_cv2
+_read_mask = DEFAULT_READERS.read_mask
+
+
+class PairedPatchDataset(Dataset):
     def __init__(
         self,
         paths: SplitPaths,
@@ -188,6 +206,8 @@ class LEVIRPatchDataset(Dataset):
         min_change_ratio: float = 0.005,
         max_tries: int = 25,
         temporal_swap_prob: float = 0.0,
+        *,
+        readers: Readers = DEFAULT_READERS,
     ) -> None:
         self.paths = paths
         self.patch_size = patch_size
@@ -197,6 +217,7 @@ class LEVIRPatchDataset(Dataset):
         self.min_change_ratio = min_change_ratio
         self.max_tries = max_tries
         self.temporal_swap_prob = temporal_swap_prob
+        self.readers = readers
 
     def __len__(self) -> int:
         return len(self.paths) * self.epoch_multiplier
@@ -221,9 +242,9 @@ class LEVIRPatchDataset(Dataset):
 
     def __getitem__(self, index: int) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         index %= len(self.paths)
-        image_a = _read_rgb(self.paths.a[index])
-        image_b = _read_rgb(self.paths.b[index])
-        mask = _read_mask(self.paths.labels[index])
+        image_a = self.readers.read_image(self.paths.a[index])
+        image_b = self.readers.read_image(self.paths.b[index])
+        mask = self.readers.read_mask(self.paths.labels[index])
         y, x = self._sample_xy(mask)
         patch = self.patch_size
         image_a = image_a[y : y + patch, x : x + patch]
@@ -244,18 +265,28 @@ class LEVIRPatchDataset(Dataset):
         )
 
 
-class LEVIRFullDataset(Dataset):
-    def __init__(self, paths: SplitPaths, transform: A.Compose | None) -> None:
+LEVIRPatchDataset = PairedPatchDataset
+
+
+class PairedFullDataset(Dataset):
+    def __init__(
+        self,
+        paths: SplitPaths,
+        transform: A.Compose | None,
+        *,
+        readers: Readers = DEFAULT_READERS,
+    ) -> None:
         self.paths = paths
         self.transform = transform
+        self.readers = readers
 
     def __len__(self) -> int:
         return len(self.paths)
 
     def __getitem__(self, index: int) -> tuple[torch.Tensor, torch.Tensor, np.ndarray, str]:
-        image_a = _read_rgb(self.paths.a[index])
-        image_b = _read_rgb(self.paths.b[index])
-        mask = _read_mask(self.paths.labels[index])
+        image_a = self.readers.read_image(self.paths.a[index])
+        image_b = self.readers.read_image(self.paths.b[index])
+        mask = self.readers.read_mask(self.paths.labels[index])
         if self.transform is not None:
             transformed = self.transform(image=image_a, image2=image_b, mask=mask)
             return transformed["image"].float(), transformed["image2"].float(), mask, self.paths.names[index]
@@ -267,24 +298,33 @@ class LEVIRFullDataset(Dataset):
         )
 
 
+LEVIRFullDataset = PairedFullDataset
+
+
 @dataclass
 class DatasetBundle:
-    train_dataset: LEVIRPatchDataset
+    train_dataset: PairedPatchDataset
     train_loader: DataLoader
     train_sampler: DistributedSampler | None
-    val_dataset: LEVIRFullDataset
-    test_dataset: LEVIRFullDataset
+    val_dataset: PairedFullDataset
+    test_dataset: PairedFullDataset
     train_paths: SplitPaths
+    readers: Readers
 
 
 def build_datasets(
-    cfg: DataConfig, context: DistributedContext, seed: int, batch_size: int
+    cfg: DataConfig,
+    context: DistributedContext,
+    seed: int,
+    batch_size: int,
+    index_builder: IndexBuilder = parse_split,
+    readers: Readers = DEFAULT_READERS,
 ) -> DatasetBundle:
     train_transform, eval_transform = build_transforms(cfg)
-    train_paths = subset_split(parse_split(cfg.root, "train"), cfg.subset_fraction)
-    val_paths = subset_split(parse_split(cfg.root, "val"), cfg.subset_fraction)
-    test_paths = subset_split(parse_split(cfg.root, "test"), cfg.subset_fraction)
-    train_dataset = LEVIRPatchDataset(
+    train_paths = subset_split(index_builder(cfg.root, "train"), cfg.subset_fraction)
+    val_paths = subset_split(index_builder(cfg.root, "val"), cfg.subset_fraction)
+    test_paths = subset_split(index_builder(cfg.root, "test"), cfg.subset_fraction)
+    train_dataset = PairedPatchDataset(
         train_paths,
         patch_size=cfg.image_size,
         transform=train_transform,
@@ -293,6 +333,7 @@ def build_datasets(
         min_change_ratio=cfg.min_change_ratio,
         max_tries=cfg.max_crop_tries,
         temporal_swap_prob=cfg.temporal_swap_prob,
+        readers=readers,
     )
     sampler = None
     if context.distributed:
@@ -329,7 +370,8 @@ def build_datasets(
         train_dataset,
         loader,
         sampler,
-        LEVIRFullDataset(val_paths, eval_transform),
-        LEVIRFullDataset(test_paths, eval_transform),
+        PairedFullDataset(val_paths, eval_transform, readers=readers),
+        PairedFullDataset(test_paths, eval_transform, readers=readers),
         train_paths,
+        readers,
     )
