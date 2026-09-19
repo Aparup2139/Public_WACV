@@ -1,0 +1,22 @@
+# .gitignore
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Dataset checkpoints and results are large/binary and machine-specific
+s2looking/checkpoints/*
+!s2looking/checkpoints/.gitkeep
+s2looking/results/*
+!s2looking/results/.gitkeep
+
+valais_bmd/checkpoints/*
+!valais_bmd/checkpoints/.gitkeep
+valais_bmd/results/*
+!valais_bmd/results/.gitkeep
+
+b_flair/checkpoints/*
+!b_flair/checkpoints/.gitkeep
+b_flair/results/*
+!b_flair/results/.gitkeep
+
+.ipynb_checkpoints/

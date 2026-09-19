@@ -1,0 +1,13 @@
+torch
+opencv-python
+tifffile
+albumentations
+timm
+scipy
+pandas
+numpy
+matplotlib
+tqdm
+pyyaml
+nbformat
+pytest
