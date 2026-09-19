@@ -8,7 +8,7 @@ paths:
 
 data:
   image_size: 256
-  change_target_frac: 0.30
+  change_focus_prob: 0.30  # fixed from typo'd `change_target_frac` that didn't exist in DataConfig; value retained from original notebook tuning but should be re-verified
   num_workers: 4
 
 train:
