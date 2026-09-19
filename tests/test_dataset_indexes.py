@@ -1,8 +1,10 @@
+import pickle
 from pathlib import Path
 import numpy as np
 import cv2
 
 from s2looking.dataset import build_index, READERS
+from valais_bmd.dataset import build_index as valais_build_index, load_pruned_names, READERS as VALAIS_READERS
 
 
 def _make_pair(root: Path, split: str, name: str):
@@ -29,3 +31,35 @@ def test_readers_use_cv2_and_threshold_127(tmp_path):
     mask_path = tmp_path / "m.png"
     cv2.imwrite(str(mask_path), np.array([[0, 200]], dtype=np.uint8))
     assert READERS.read_mask(mask_path).tolist() == [[0, 1]]
+
+
+def _make_valais_pair(root, split, name):
+    for sub in ("2017", "2023", "labels"):
+        (root / split / sub).mkdir(parents=True, exist_ok=True)
+    cv2.imwrite(str(root / split / "2017" / f"{name}.png"), np.zeros((4, 4, 3), dtype=np.uint8))
+    cv2.imwrite(str(root / split / "2023" / f"{name}.png"), np.zeros((4, 4, 3), dtype=np.uint8))
+    cv2.imwrite(str(root / split / "labels" / f"{name}.png"), np.zeros((4, 4), dtype=np.uint8))
+
+
+def test_valais_build_index_respects_pruned_name_filter(tmp_path):
+    _make_valais_pair(tmp_path, "test", "a")
+    _make_valais_pair(tmp_path, "test", "b")
+
+    full = valais_build_index(tmp_path, "test")
+    assert set(full.names) == {"a.png", "b.png"}
+
+    pruned = valais_build_index(tmp_path, "test", pruned_names={"a.png"})
+    assert pruned.names == ["a.png"]
+
+
+def test_valais_readers_use_zero_threshold_for_binary_masks(tmp_path):
+    mask_path = tmp_path / "m01.png"
+    cv2.imwrite(str(mask_path), np.array([[0, 1]], dtype=np.uint8))
+    assert VALAIS_READERS.read_mask(mask_path).sum() == 1  # would be 0 with a >127 threshold
+
+
+def test_load_pruned_names_reads_pickle(tmp_path):
+    pickle_path = tmp_path / "names.pkl"
+    with pickle_path.open("wb") as handle:
+        pickle.dump(["a.png", "b.png"], handle)
+    assert load_pruned_names(pickle_path) == {"a.png", "b.png"}

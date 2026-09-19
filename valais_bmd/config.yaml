@@ -1,0 +1,29 @@
+# Paths are placeholders — override per machine via env var or notebook cell, never commit real absolute paths.
+paths:
+  data_root: "${VALAIS_DATA_ROOT}"          # expects <root>/{train,val,test}/{2017,2023,labels}
+  pruned_names_pickle: "${VALAIS_DATA_ROOT}/test_imgs_filtered_5000_2.pkl"
+  transfer_checkpoint_path: "s2looking/checkpoints/qgmamba_s2looking_best_11.pt"  # cross-dataset transfer source
+  model_config_path: "config/valais_cd_transfer.yaml"   # swin_tiny + StochasticDiffusionDecoder -- NOT compatible with the S2Looking checkpoint's architecture; strict=True load will fail if pointed at the wrong config
+  output_dir: "valais_bmd/results"
+
+data:
+  image_size: 256
+  change_target_frac: 0.30
+  num_workers: 4
+
+train:
+  ema_decay: 0.999
+  pos_weight: 5.0   # notebook's QG_POS_WEIGHT was a hardcoded constant, deliberately above estimate_pos_weight()'s [1,4] clip range -- requires Task 2's override hook to be applied before this key is valid (otherwise load_config raises "Unknown configuration keys")
+
+eval:
+  tile_size: 256
+  tile_stride: 256
+  final_stride: 256   # a ValaisCD patch already equals one model tile -- no overlap tiling gain here
+  d4_tta: true
+
+threshold_grid:
+  final: [0.05, 0.675, 0.025]
+  selection_strategy: plateau   # use qgmamba_cd.threshold.pick_threshold_plateau, not argmax
+
+diagnostics:
+  component_recall_bins: [[0, 50], [50, 200], [200, 800], [800, 1000000000]]
