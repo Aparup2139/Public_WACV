@@ -1,0 +1,34 @@
+# Paths are placeholders — override per machine via env var or notebook cell, never commit real absolute paths.
+paths:
+  data_root: "${S2LOOKING_DATA_ROOT}"        # expects <root>/{train,val,test}/{Image1,Image2,label}
+  checkpoint_path: "s2looking/checkpoints/qgmamba_s2looking_best_11.pt"
+  model_config_path: "config/levir_cd_accuracy_4x40gb.yaml"
+  output_dir: "s2looking/results"
+
+data:
+  image_size: 256
+  train_multiplier: 4        # matches the notebook's CROPS_PER_IMAGE=4 (train_df replicated 4x)
+  change_focus_prob: 0.55    # matches the notebook's CROP_NONEMPTY_P=0.55 -- do NOT leave this at the LEVIR base config's 0.0
+  num_workers: 8
+  pin_memory: true
+
+train:
+  epochs: 140
+  patience: 18
+  ema_decay: 0.999
+  pos_weight: 3.0             # notebook's QG_POS_WEIGHT was a hardcoded constant, not computed -- requires Task 2's override hook
+
+eval:
+  tile_size: 256
+  tile_stride: 256
+  final_stride: 128
+  d4_tta: true
+
+threshold_grid:
+  final: [0.40, 0.775, 0.015]   # [start, stop, step] -> matches the 25-point final-protocol grid
+  quick: [0.44, 0.80, 0.03]
+
+# data.change_focus_prob and train.pos_weight are copied from the notebook's tuned constants
+# (CROP_NONEMPTY_P, QG_POS_WEIGHT), not from config/levir_cd_accuracy_4x40gb.yaml's defaults --
+# verify both against the actual notebook cells (cells 2 and 9 of unet-s2looking_best (1) (5).ipynb)
+# before training, the same way Task 6 verifies pick_threshold_plateau.
