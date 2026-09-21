@@ -1,8 +1,10 @@
 # b_flair/config.yaml
 paths:
-  data_root: "${BFLAIR_DATA_ROOT}"     # expects <root>/{t1,t2,annotations}, flat, no splits
-  metadata_path: "${BFLAIR_DATA_ROOT}/metadata.json"
-  checkpoint_path: "s2looking/checkpoints/qgmamba_s2looking_best_11.pt"  # zero-shot transfer source
+  data_root: "data/b_flair"            # override with BFLAIR_DATA_ROOT
+  metadata_path: "data/b_flair/metadata.json"
+  checkpoint_path: "s2looking/qgmamba_s2looking_best.pt"  # zero-shot transfer source
+  checkpoint_hf_repo: null             # same published S2Looking model repository
+  checkpoint_hf_filename: "qgmamba_s2looking_best.pt"
   model_config_path: "config/levir_cd_accuracy_4x40gb.yaml"  # must match checkpoint architecture, NOT configs/bflair_cd_paper.yaml
   output_dir: "b_flair/results"
 

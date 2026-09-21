@@ -1,8 +1,10 @@
 # Paths are placeholders — override per machine via env var or notebook cell, never commit real absolute paths.
 paths:
-  data_root: "${VALAIS_DATA_ROOT}"          # expects <root>/{train,val,test}/{2017,2023,labels}
-  pruned_names_pickle: "${VALAIS_DATA_ROOT}/test_imgs_filtered_5000_2.pkl"
+  data_root: "data/valais_bmd"               # override with VALAIS_DATA_ROOT
   transfer_checkpoint_path: "s2looking/checkpoints/qgmamba_s2looking_best_11.pt"  # cross-dataset transfer source
+  checkpoint_path: "valais_bmd/checkpoints/best.pt"
+  checkpoint_hf_repo: null                    # set to owner/model-repo after publishing trained Valais weights
+  checkpoint_hf_filename: "valais_bmd_best.pt"
   model_config_path: "config/valais_cd_transfer.yaml"   # swin_tiny + StochasticDiffusionDecoder -- NOT compatible with the S2Looking checkpoint's architecture; strict=True load will fail if pointed at the wrong config
   output_dir: "valais_bmd/results"
 

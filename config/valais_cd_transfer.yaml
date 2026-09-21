@@ -1,0 +1,87 @@
+data:
+  root: ./valais_bmd/Valais-CD-Dataset
+  image_size: 256
+  train_multiplier: 1
+  subset_fraction: 1.0
+  change_focus_prob: 0.30
+  min_change_ratio: 0.005
+  max_crop_tries: 25
+  temporal_swap_prob: 0.0
+  num_workers: 4
+  prefetch_factor: 2
+  pin_memory: true
+
+model:
+  encoder_name: swin_tiny_patch4_window7_224.ms_in1k
+  pretrained: true
+  input_size: 256
+  allow_encoder_fallback: false
+  diffusion_timesteps: 100
+  diffusion_infer_steps: 5
+  diffusion_start_timestep: 50
+  diffusion_noise_scale: 0.0
+  diffusion_channels: [32, 64, 128]
+  use_ddim_at_inference: true
+  diffusion_enabled: true
+  corrected_diffusion_enabled: true
+  symmetric_temporal_enabled: false
+  edge_fusion_enabled: false
+  refinement_enabled: false
+  refinement_channels: 64
+  scan_chunk_size: 16
+
+loss:
+  bce: 1.0
+  dice: 1.0
+  orthogonal: 0.1
+  diffusion: 0.5
+  focal: 0.0
+  lovasz: 0.0
+  boundary: 0.0
+  coarse: 0.0
+  auxiliary: 0.0
+  hard: 0.0
+  iou: 0.0
+  tversky: 0.0
+  ohem: 0.0
+
+train:
+  seed: 42
+  epochs: 140
+  batch_size: 8
+  learning_rate: 0.0003
+  weight_decay: 0.0001
+  encoder_lr_multiplier: 0.1
+  layerwise_lr_decay: 0.8
+  freeze_encoder_epochs: 0
+  patience: 18
+  amp: true
+  amp_dtype: float16
+  grad_clip: 1.0
+  ema_decay: 0.999
+  ema_update_every: 1
+  ema_reference_batch_size: 24
+  ema_warmup_epochs: 10
+  validation_interval: 1
+  channels_last: true
+  allow_tf32: true
+  fused_optimizer: true
+  output_dir: ./valais_bmd/results
+  resume: null
+  init_checkpoint: null
+  init_from_ema: true
+  save_every_epoch: true
+  keep_top_k: 5
+
+eval:
+  tile_size: 256
+  tile_stride: 256
+  final_stride: 256
+  batch_tiles: 8
+  tta: false
+  final_tta: true
+  d4_tta: true
+  quick_val_images: null
+  postprocess: false
+  min_area: 32
+  morph_kernel: 3

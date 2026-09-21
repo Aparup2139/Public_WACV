@@ -8,6 +8,43 @@ import tifffile
 from qgmamba_cd.data import Readers, SplitPaths
 
 _EXTENSIONS = (".tif", ".tiff")
+_HF_REPO_ID = "elliotvincent/b-FLAIR-test"
+_EXPECTED_COUNT = 1730
+
+
+def _triplet_count(root: Path) -> int:
+    directories = [root / name for name in ("t1", "t2", "annotations")]
+    if not all(directory.is_dir() for directory in directories):
+        return 0
+    names = [
+        {path.name for path in directory.iterdir() if path.suffix.lower() in _EXTENSIONS}
+        for directory in directories
+    ]
+    return len(set.intersection(*names))
+
+
+def prepare_data_root(root: str | Path, *, download: bool = False) -> Path:
+    """Download and validate the official b-FLAIR test dataset from Hugging Face."""
+    root = Path(root).expanduser().resolve()
+    root.mkdir(parents=True, exist_ok=True)
+    if _triplet_count(root) == _EXPECTED_COUNT:
+        return root
+    if not download:
+        raise FileNotFoundError(f"b-FLAIR is incomplete at {root}")
+    try:
+        from huggingface_hub import snapshot_download
+    except ImportError as exc:
+        raise RuntimeError("Automatic b-FLAIR setup requires huggingface_hub") from exc
+    snapshot_download(
+        repo_id=_HF_REPO_ID,
+        repo_type="dataset",
+        local_dir=root,
+        allow_patterns=["t1/*.tif", "t2/*.tif", "annotations/*.tif", "metadata.json", "README.md"],
+    )
+    count = _triplet_count(root)
+    if count != _EXPECTED_COUNT:
+        raise RuntimeError(f"Expected {_EXPECTED_COUNT} b-FLAIR triplets, found {count} at {root}")
+    return root
 
 
 def read_rgb_tifffile(path: Path) -> np.ndarray:

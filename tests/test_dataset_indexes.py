@@ -4,8 +4,16 @@ import numpy as np
 import cv2
 import tifffile
 
+import s2looking.dataset as s2_dataset
+import b_flair.dataset as bflair_dataset
 from s2looking.dataset import build_index, READERS
-from valais_bmd.dataset import build_index as valais_build_index, load_pruned_names, READERS as VALAIS_READERS
+from valais_bmd.dataset import (
+    READERS as VALAIS_READERS,
+    build_index as valais_build_index,
+    find_pruned_names_pickle,
+    load_pruned_names,
+    prepare_data_root,
+)
 from b_flair.dataset import build_index as bflair_build_index, READERS as BFLAIR_READERS
 
 
@@ -33,6 +41,13 @@ def test_readers_use_cv2_and_threshold_127(tmp_path):
     mask_path = tmp_path / "m.png"
     cv2.imwrite(str(mask_path), np.array([[0, 200]], dtype=np.uint8))
     assert READERS.read_mask(mask_path).tolist() == [[0, 1]]
+
+
+def test_prepare_s2looking_accepts_complete_materialized_splits(tmp_path, monkeypatch):
+    monkeypatch.setattr(s2_dataset, "_EXPECTED_COUNTS", {"train": 1, "val": 1, "test": 1})
+    for split in ("train", "val", "test"):
+        _make_pair(tmp_path, split, "a")
+    assert s2_dataset.prepare_data_root(tmp_path) == tmp_path.resolve()
 
 
 def _make_valais_pair(root, split, name):
@@ -67,6 +82,29 @@ def test_load_pruned_names_reads_pickle(tmp_path):
     assert load_pruned_names(pickle_path) == {"a.png", "b.png"}
 
 
+def test_prepare_valais_root_accepts_three_complete_splits(tmp_path):
+    for split in ("train", "val", "test"):
+        _make_valais_pair(tmp_path, split, "a")
+    assert prepare_data_root(tmp_path) == tmp_path.resolve()
+
+
+def test_prepare_valais_root_reports_missing_splits(tmp_path):
+    _make_valais_pair(tmp_path, "val", "a")
+    try:
+        prepare_data_root(tmp_path)
+    except FileNotFoundError as error:
+        assert "train, test" in str(error)
+    else:
+        raise AssertionError("Incomplete ValaisCD root should fail validation")
+
+
+def test_find_pruned_names_pickle_uses_split_directory(tmp_path):
+    pickle_path = tmp_path / "test" / "test_imgs_filtered_5000_2.pkl"
+    pickle_path.parent.mkdir()
+    pickle_path.touch()
+    assert find_pruned_names_pickle(tmp_path) == pickle_path
+
+
 def test_bflair_build_index_flat_layout(tmp_path):
     for sub in ("t1", "t2", "annotations"):
         (tmp_path / sub).mkdir(parents=True)
@@ -95,3 +133,11 @@ def test_bflair_read_mask_threshold_zero(tmp_path):
     mask_path = tmp_path / "mask.tif"
     tifffile.imwrite(mask_path, np.array([[0, 255]], dtype=np.uint8))
     assert BFLAIR_READERS.read_mask(mask_path).tolist() == [[0, 1]]
+
+
+def test_prepare_bflair_accepts_complete_download(tmp_path, monkeypatch):
+    monkeypatch.setattr(bflair_dataset, "_EXPECTED_COUNT", 1)
+    for sub in ("t1", "t2", "annotations"):
+        (tmp_path / sub).mkdir()
+        tifffile.imwrite(tmp_path / sub / "0.tif", np.zeros((2, 2), dtype=np.uint8))
+    assert bflair_dataset.prepare_data_root(tmp_path) == tmp_path.resolve()

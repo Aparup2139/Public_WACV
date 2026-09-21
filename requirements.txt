@@ -10,4 +10,8 @@ matplotlib
 tqdm
 pyyaml
 nbformat
+huggingface_hub
+datasets
+jupyterlab
+ipykernel
 pytest

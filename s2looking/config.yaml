@@ -1,7 +1,9 @@
 # Paths are placeholders — override per machine via env var or notebook cell, never commit real absolute paths.
 paths:
-  data_root: "${S2LOOKING_DATA_ROOT}"        # expects <root>/{train,val,test}/{Image1,Image2,label}
-  checkpoint_path: "s2looking/checkpoints/qgmamba_s2looking_best_11.pt"
+  data_root: "data/s2looking"                 # override with S2LOOKING_DATA_ROOT
+  checkpoint_path: "s2looking/qgmamba_s2looking_best.pt"
+  checkpoint_hf_repo: null                    # set to owner/model-repo after publishing weights
+  checkpoint_hf_filename: "qgmamba_s2looking_best.pt"
   model_config_path: "config/levir_cd_accuracy_4x40gb.yaml"
   output_dir: "s2looking/results"
 

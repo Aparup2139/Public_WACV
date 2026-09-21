@@ -11,8 +11,10 @@ s2looking/results/*
 
 valais_bmd/checkpoints/*
 !valais_bmd/checkpoints/.gitkeep
+!valais_bmd/checkpoints/best.pt
 valais_bmd/results/*
 !valais_bmd/results/.gitkeep
+valais_bmd/Valais-CD-Dataset/
 
 b_flair/checkpoints/*
 !b_flair/checkpoints/.gitkeep
@@ -20,3 +22,4 @@ b_flair/results/*
 !b_flair/results/.gitkeep
 
 .ipynb_checkpoints/
+data/
