@@ -1,67 +1,84 @@
 data:
-  root: /work/data1/paul/man_dataset/maneet_iiest/downloads/LEVIR-CD256
+  root: path/to/dataset
   image_size: 256
   train_multiplier: 1
   subset_fraction: 1.0
   change_focus_prob: 0.0
   min_change_ratio: 0.005
   max_crop_tries: 1
-  temporal_swap_prob: 0.5
+  temporal_swap_prob: 0.0
   num_workers: 8
   prefetch_factor: 4
   pin_memory: true
 
 model:
-  encoder_name: swin_small_patch4_window7_224.ms_in22k_ft_in1k
+  encoder_name: swin_tiny_patch4_window7_224.ms_in1k
   pretrained: true
   input_size: 256
   allow_encoder_fallback: false
   diffusion_timesteps: 100
   diffusion_infer_steps: 5
+  diffusion_start_timestep: 50
+  diffusion_noise_scale: 0.0
   diffusion_channels: [32, 64, 128]
-  use_ddim_at_inference: false
-  scan_chunk_size: 16
+  use_ddim_at_inference: true
+  diffusion_enabled: true
+  corrected_diffusion_enabled: true
+  symmetric_temporal_enabled: false
+  edge_fusion_enabled: false
+  refinement_enabled: false
+  refinement_channels: 64
+  scan_chunk_size: 16 
 
 loss:
-  focal: 1.0
+  bce: 1.0
   dice: 1.0
-  boundary: 0.5
-  diffusion: 0.1
-  orthogonal: 0.02
-  hard: 0.25
-  iou: 1.0
-  tversky: 0.5
+  orthogonal: 0.1
+  diffusion: 0.5
+  focal: 0.0
+  focal_gamma: 2.0
+  lovasz: 0.0
+  boundary: 0.0
+  coarse: 0.0
+  auxiliary: 0.0
+  hard: 0.0
+  iou: 0.0
+  tversky: 0.0
   tversky_alpha: 0.4
   tversky_beta: 0.6
-  focal_gamma: 2.0
+  ohem: 0.0
+  ohem_fraction: 0.25
 
 train:
-  seed: 42
-  epochs: 80
-  # 8 x 4 GPUs = global batch 32, retaining substantially more optimizer
-  # updates than the speed-first global-batch-64 profile.
+  epochs: 125
   batch_size: 8
-  learning_rate: 0.0002
-  encoder_lr_multiplier: 0.1
+  amp: true
+  amp_dtype: float16
+  learning_rate: 0.0003
   weight_decay: 0.0001
+  encoder_lr_multiplier: 0.1
+  layerwise_lr_decay: 0.8
+  freeze_encoder_epochs: 0
+  grad_clip: 1.0
   ema_decay: 0.999
-  ema_update_every: 2
+  ema_update_every: 1
   ema_reference_batch_size: 24
   ema_warmup_epochs: 10
-  freeze_encoder_epochs: 0
-  patience: 12
   validation_interval: 2
-  amp: true
-  amp_dtype: bfloat16
-  grad_clip: 1.0
+  patience: 20
   channels_last: true
   allow_tf32: true
   fused_optimizer: true
   sync_batchnorm: false
   find_unused_parameters: false
-  output_dir: ./outputs/levir_qgmamba_accuracy
+  output_dir: ./outputs/levir_final
   resume: null
+  init_checkpoint: null
+  init_from_ema: true
   save_every_epoch: true
+  keep_top_k: 5
+  minimum_f1_epoch: null
+  minimum_f1: null
 
 eval:
   tile_size: 256
@@ -69,7 +86,7 @@ eval:
   final_stride: 256
   batch_tiles: 8
   tta: false
-  final_tta: true
+  final_tta: false
   thresholds: [0.20, 0.225, 0.25, 0.275, 0.30, 0.325, 0.35, 0.375, 0.40, 0.425, 0.45, 0.475, 0.50, 0.525, 0.55, 0.575, 0.60, 0.625, 0.65, 0.675, 0.70, 0.725, 0.75, 0.775, 0.80]
   quick_val_images: null
   postprocess: false
