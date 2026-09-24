@@ -42,7 +42,7 @@ DATASET_PROFILES = {
     "levir_cd": {
         "task": "LEVIR-CD supervised test inference",
         "module": "qgmamba_cd.data",
-        "dataset_config": "config/levir_cd_accuracy_4x40gb.yaml",
+        "dataset_config": "config/levir_final_config.yaml",
         "data_root": "data/levir_cd",
         "data_env": "LEVIR_DATA_ROOT",
         "checkpoint": "levir_qgmamba_accuracy_best.pt.zip",

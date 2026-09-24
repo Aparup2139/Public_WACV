@@ -1,5 +1,5 @@
 data:
-  root: /work/data1/paul/man_dataset/maneet_iiest/downloads/LEVIR-CD256
+  root: path/to/dataset
   image_size: 256
   train_multiplier: 1
   subset_fraction: 1.0
