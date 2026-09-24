@@ -1,7 +1,7 @@
 # BMD-CD experiments
 
-The `experiments.ipynb` notebook runs the QGMamba-CD inference on LEVIR-CD, S2Looking, ValaisCD,
-or b-FLAIR. The repository includes the QGMamba-CD weights for LEVIR-CD. A CUDA-capable GPU is
+The `experiments.ipynb` notebook runs the bmd-cd inference on LEVIR-CD, S2Looking, ValaisCD,
+or b-FLAIR. The repository includes the bmd-cd weights for LEVIR-CD. A CUDA-capable GPU is
 strongly recommended for inference.
 
 ## Setup
@@ -124,7 +124,7 @@ jupyter lab experiments.ipynb
 Select **Kernel > Restart Kernel and Run All Cells**. The notebook will:
 
 1. Resolve the LEVIR-CD dataset and checkpoint paths.
-2. Build QGMamba-CD with the matching model configuration.
+2. Build bmd-cd with the matching model configuration.
 3. Load the trained weights.
 4. Index the training, validation, and test splits.
 5. Run inference on the held-out test split.
