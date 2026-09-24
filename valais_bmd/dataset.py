@@ -7,10 +7,6 @@ import zipfile
 from pathlib import Path
 
 from qgmamba_cd.data import Readers, SplitPaths, make_grayscale_mask_reader, read_rgb_cv2
-
-# ValaisCD masks are {0,1}, not {0,255} -- a >127 threshold (correct for S2Looking/LEVIR)
-# silently zeros every label here. This is the exact bug class the original notebook
-# guarded against with a runtime assert; encoding it as threshold=0 removes the class entirely.
 READERS = Readers(read_image=read_rgb_cv2, read_mask=make_grayscale_mask_reader(threshold=0))
 
 _EXTENSIONS = (".png", ".jpg", ".jpeg", ".tif", ".tiff")

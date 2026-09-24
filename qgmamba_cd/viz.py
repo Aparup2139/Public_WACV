@@ -13,7 +13,6 @@ from .evaluation import predict_probability_map
 # instead of the whole dataset (which could be huge just to render `n`
 # examples). If a dataset ever has changed samples too sparse to turn up
 # within this many draws, the upgrade path is to scan the full dataset index
-# (or reuse a precomputed change-stats cache, as the source notebooks did).
 _PREFER_CHANGED_SCAN_LIMIT = 100
 
 

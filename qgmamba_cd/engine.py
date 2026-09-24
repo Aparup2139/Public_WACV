@@ -38,7 +38,7 @@ def set_encoder_trainable(model: torch.nn.Module, trainable: bool) -> None:
 
 
 def build_layerwise_parameter_groups(model: QGMambaDiffCD, config: ExperimentConfig):
-    """Apply progressively smaller learning rates toward the encoder input."""
+    """Apply progressively smaller learning rates toward the encoder input layers, with the head at the configured learning rate. Returns a list of parameter groups and a list of maximum learning rates for each group."""
     encoder_named = list(model.encoder.named_parameters())
     layer_indices = []
     for name, _ in encoder_named:

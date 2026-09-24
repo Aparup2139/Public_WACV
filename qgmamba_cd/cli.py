@@ -7,7 +7,7 @@ from .config import ExperimentConfig, load_config
 
 DEFAULT_CONFIG = str(Path(__file__).resolve().parent.parent / "configs" / "levir_final_config.yaml")
 
-
+"""For Client code, we provide a common parser and config override functions to reduce boilerplate."""
 def common_parser(description: str, checkpoint: bool = False) -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument("--config", default=DEFAULT_CONFIG)

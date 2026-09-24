@@ -10,7 +10,7 @@ def ensure_checkpoint(
     filename: str | None = None,
     revision: str | None = None,
 ) -> Path:
-    """Resolve a checkpoint locally, downloading it from a Hugging Face model repo if needed."""
+    """Resolve the checkpoint locally, downloading it from a Hugging Face model repo if needed."""
     destination = Path(local_path).expanduser().resolve()
     if destination.is_file():
         return destination

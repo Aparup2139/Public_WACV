@@ -5,7 +5,7 @@ from pathlib import Path
 from qgmamba_cd.data import make_grayscale_mask_reader, read_rgb_cv2, DEFAULT_READERS, SplitPaths
 from qgmamba_cd.losses import estimate_pos_weight
 
-
+"""Unit tests for the Public_WACV/qgmamba_cd/data.py module."""
 def test_grayscale_mask_reader_default_threshold_matches_legacy_127(tmp_path):
     mask_path = tmp_path / "mask.png"
     cv2.imwrite(str(mask_path), np.array([[0, 100, 200, 255]], dtype=np.uint8))

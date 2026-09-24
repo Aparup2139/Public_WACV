@@ -24,7 +24,7 @@ def _triplet_count(root: Path) -> int:
 
 
 def prepare_data_root(root: str | Path, *, download: bool = False) -> Path:
-    """Download and validate the official b-FLAIR test dataset from Hugging Face."""
+    """Download and validate the official b-FLAIR test dataset from the Hugging Face platform."""
     root = Path(root).expanduser().resolve()
     root.mkdir(parents=True, exist_ok=True)
     if _triplet_count(root) == _EXPECTED_COUNT:

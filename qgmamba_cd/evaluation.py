@@ -11,7 +11,7 @@ from tqdm import tqdm
 from .config import EvalConfig
 from .data import IMAGENET_MEAN, IMAGENET_STD, LEVIRFullDataset
 from .distributed import DistributedContext, reduce_sum, resolve_amp_dtype
-
+""" Evaluation utilities for the QG-Mamba-Diff change-detection package."""
 
 def confusion_counts(prediction: np.ndarray, target: np.ndarray) -> tuple[int, int, int, int]:
     prediction = prediction.astype(np.uint8)

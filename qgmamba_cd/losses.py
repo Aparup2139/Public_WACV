@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 
 class FullLoss(nn.Module):
-    """Compact region, overlap, Lovasz, and explicit edge-head objective."""
+    """Compact region, overlap, Lovasz, and explicit edge-head objective for change detection with BMD-CD and QG-Mamba-Diff."""
 
     def __init__(self, config: LossConfig, pos_weight: float = 4.0):
         super().__init__()

@@ -32,7 +32,7 @@ class SplitPaths:
 
 
 class PairedTrainTransform:
-    """Shared geometry with deliberately independent temporal appearance noise."""
+    """Shared geometry with a deliberately independent temporal appearance noise."""
 
     def __init__(self, cfg: DataConfig):
         self.cfg = cfg

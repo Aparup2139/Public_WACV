@@ -21,7 +21,7 @@ def pick_threshold_plateau(rows: list[dict], tolerance: float = 0.99) -> float:
     threshold values passed in, unchanged (not an interpolated average --
     for an even-length plateau this picks the upper-middle element by
     index, not the statistical mean of the two middle thresholds, so the
-    result is always a threshold that was actually swept).
+    result is always a threshold that was actually swept) .
     """
 
     ordered = sorted(rows, key=lambda row: row["threshold"])

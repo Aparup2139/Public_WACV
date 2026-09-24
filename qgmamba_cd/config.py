@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-
+"""Configuration classes for the QG-Mamba-Diff change-detection package."""
 
 @dataclass
 class DataConfig:

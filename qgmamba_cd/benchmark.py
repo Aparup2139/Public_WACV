@@ -13,7 +13,7 @@ def count_parameters(model: torch.nn.Module) -> dict:
 
 
 def _measure_flops(model: torch.nn.Module, inputs: tuple) -> float | None:
-    """Best-effort FLOPs for one forward pass. None if unavailable."""
+    """Best-effort FLOPs for one forward pass."""
     try:
         from torch.utils.flop_counter import FlopCounterMode
     except ImportError:

@@ -4,7 +4,7 @@ from pathlib import Path
 
 from qgmamba_cd.data import DEFAULT_READERS, SplitPaths
 
-READERS = DEFAULT_READERS  # 3-band PNG via cv2, {0,255} masks -> threshold 127, both match package defaults
+READERS = DEFAULT_READERS  # 3-band PNG, {0,255} masks -> threshold 127, both match package defaults
 
 _EXTENSIONS = (".png", ".jpg", ".jpeg", ".tif", ".tiff")
 _HF_REPO_ID = "EVER-Z/torchange_s2looking"

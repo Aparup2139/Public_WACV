@@ -88,7 +88,7 @@ def unwrap_model(model: torch.nn.Module) -> torch.nn.Module:
 
 @torch.no_grad()
 def broadcast_module_state(module: torch.nn.Module, source: int = 0) -> None:
-    """Make parameters and buffers identical before sharded evaluation."""
+    """Make the parameters and buffers identical before sharded evaluation."""
     if not (dist.is_available() and dist.is_initialized()):
         return
     for value in module.state_dict().values():

@@ -81,7 +81,7 @@ def initialize_from_checkpoint(
     model: torch.nn.Module,
     prefer_ema: bool = True,
 ):
-    """Load model weights only while intentionally resetting training state."""
+    """Load the model weights only while intentionally resetting training state."""
     checkpoint = _torch_load(path, map_location=next(model.parameters()).device)
     if prefer_ema and checkpoint.get("ema_state") is not None:
         raw_state = checkpoint["ema_state"]

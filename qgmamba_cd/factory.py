@@ -8,7 +8,7 @@ from .checkpoint import normalize_state_dict
 from .config import ExperimentConfig, apply_overrides, load_config
 from .model import QGMambaDiffCD
 
-
+"""Factory functions for building QG-Mamba-Diff models and loading checkpoints."""
 def _torch_load(path: str | Path, map_location):
     try:
         return torch.load(path, map_location=map_location, weights_only=False)

@@ -1,6 +1,6 @@
 # Public_WACV experiments
 
-The `experiments.ipynb` notebook runs QGMamba-CD inference on LEVIR-CD, S2Looking, ValaisCD,
+The `experiments.ipynb` notebook runs the QGMamba-CD inference on LEVIR-CD, S2Looking, ValaisCD,
 or b-FLAIR. The repository includes the QGMamba-CD weights for LEVIR-CD. A CUDA-capable GPU is
 strongly recommended for inference.
 

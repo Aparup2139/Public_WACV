@@ -1,4 +1,4 @@
-"""Modular QG-Mamba-Diff change-detection package."""
+"""Modular package forQG-Mamba-Diff change-detection."""
 
 from .config import ExperimentConfig, apply_overrides, load_config
 from .factory import build_model

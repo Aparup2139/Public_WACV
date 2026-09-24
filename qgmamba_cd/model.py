@@ -65,7 +65,7 @@ class LightFusion(nn.Module):
 
 
 class SafeMamba(nn.Module):
-    """Notebook's bidirectional PyTorch selective state-space scan."""
+    """Notebook's bidirectional PyTorch selective state-space scan with chunked memory-friendly forward and backward passes."""
 
     def __init__(self, d_model: int, d_state: int = 16, scan_chunk_size: int = 16):
         super().__init__()
